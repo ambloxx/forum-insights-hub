@@ -2,6 +2,14 @@ import { useState, useCallback, useRef } from 'react';
 import { streamChat } from '@/lib/api';
 import type { ChatMessage } from '@/types';
 
+// crypto.randomUUID() requires HTTPS — use this fallback for HTTP previews
+const genId = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+};
+
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -10,14 +18,14 @@ export function useChat() {
 
   const sendMessage = useCallback(async (question: string) => {
     const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: genId(),
       role: 'user',
       content: question,
       steps: [],
       timestamp: new Date(),
     };
 
-    const assistantId = crypto.randomUUID();
+    const assistantId = genId();
     const assistantMsg: ChatMessage = {
       id: assistantId,
       role: 'assistant',

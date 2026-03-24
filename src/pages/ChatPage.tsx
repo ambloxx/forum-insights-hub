@@ -9,7 +9,7 @@ export default function ChatPage() {
   return (
     <div className="h-[calc(100vh-3.5rem)] overflow-hidden">
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={60} minSize={40}>
+        <ResizablePanel defaultSize={80} minSize={40}>
           <ChatConversation
             messages={messages}
             isStreaming={isStreaming}
@@ -17,7 +17,7 @@ export default function ChatPage() {
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={40} minSize={25} className="hidden lg:block">
+        <ResizablePanel defaultSize={20} minSize={20} className="hidden lg:block">
           <ChatContextPanel
             messages={messages}
             currentSteps={currentSteps}
