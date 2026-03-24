@@ -14,30 +14,41 @@ export interface StatsData {
   total_discussions: number;
   total_announcements: number;
   resolved_posts: number;
+  unresolved_posts: number;
   unreplied_posts: number;
+  resolution_rate_pct: number;
   avg_likes: number;
   avg_views: number;
   avg_comments: number;
   max_likes: number;
   max_views: number;
   max_comments: number;
-  by_label: Record<string, number>;
-  by_type: Record<string, number>;
+  breakdown_by_type: Array<{ type: string; count: number }>;
+  breakdown_by_label: Array<{ label: string; count: number }>;
   vector_docs: number;
 }
 
 export interface Post {
   id: number;
-  title: string;
-  post_type: string;
+  subject: string;
+  type: string;
   label: string;
-  likes: number;
-  views: number;
+  like_count: number;
+  view_count: number;
   comment_count: number;
-  created_at: string;
+  created_time: string;
+  latest_comment_time?: string;
   unreplied: boolean;
   topic_url: string;
+  creator_name?: string;
+  last_commenter_name?: string;
+  content?: string;
   engagement_score: number;
+}
+
+export interface PostsResponse {
+  posts: Post[];
+  total: number;
 }
 
 export interface SyncStatus {
