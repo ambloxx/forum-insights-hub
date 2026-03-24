@@ -131,6 +131,20 @@
     50% { opacity: 0.3; }
   }
 
+  .chat-markdown table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .chat-markdown table th,
+  .chat-markdown table td {
+    text-align: left;
+  }
+
+  .chat-markdown table tr:last-child td {
+    border-bottom: none;
+  }
+
   .think-border {
     background: linear-gradient(90deg, hsl(var(--primary) / 0.3), hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.3));
     background-size: 200% 100%;
