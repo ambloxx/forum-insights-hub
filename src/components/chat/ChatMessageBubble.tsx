@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, ChevronDown, ChevronRight, Check, User, Bot } from 'lucide-react';
+import { Copy, ChevronDown, ChevronRight, Check, User, Bot, Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { ChatMessage } from '@/types';
+
+const URL_PATTERN = /https?:\/\/[^\s'"<>]+/gi;
+
+function extractUrl(text: string): string | null {
+  const m = text.match(URL_PATTERN);
+  return m ? m[0] : null;
+}
 
 interface Props {
   message: ChatMessage;
@@ -14,6 +21,8 @@ export function ChatMessageBubble({ message }: Props) {
   const [thinkOpen, setThinkOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const isUser = message.role === 'user';
+  const isUrlRead = message.meta?.intent === 'url_read';
+  const urlInMessage = isUser ? extractUrl(message.content) : null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -29,8 +38,17 @@ export function ChatMessageBubble({ message }: Props) {
     return (
       <div className="flex justify-end">
         <div className="flex items-start gap-2 max-w-[80%]">
-          <div className="rounded-lg bg-primary/15 border border-primary/20 px-4 py-2.5">
-            <p className="text-sm text-foreground">{message.content}</p>
+          <div className="space-y-1.5">
+            <div className="rounded-lg bg-primary/15 border border-primary/20 px-4 py-2.5">
+              <p className="text-sm text-foreground">{message.content}</p>
+            </div>
+            {/* URL preview card inside user bubble */}
+            {urlInMessage && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-blue-500/30 bg-blue-500/10 text-xs text-blue-400">
+                <Globe className="h-3 w-3 shrink-0" />
+                <span className="truncate max-w-[280px]">{urlInMessage}</span>
+              </div>
+            )}
           </div>
           <div className="shrink-0 w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
             <User className="h-3.5 w-3.5 text-primary" />
@@ -48,14 +66,6 @@ export function ChatMessageBubble({ message }: Props) {
         </div>
 
         <div className="space-y-2 min-w-0 flex-1">
-          {/* Step indicator while streaming */}
-          {message.isStreaming && message.steps.length > 0 && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="font-mono">{message.steps[message.steps.length - 1]}</span>
-            </div>
-          )}
-
           {/* Meta badge */}
           {message.meta && (
             <Badge variant="secondary" className="text-xs font-mono">

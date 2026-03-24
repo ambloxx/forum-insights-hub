@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8001';
+const API_BASE = 'http://issath-3653-ait.tsi.zohocorpin.com:8001';
 
 export async function fetchHealth() {
   const res = await fetch(`${API_BASE}/health`);
