@@ -18,7 +18,7 @@ export function WelcomeScreen({ onQuerySelect }: Props) {
       <div className="max-w-2xl w-full text-center space-y-8">
         {/* Logo + Title */}
         <div className="space-y-3">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 mb-2">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 border  mb-2">
             <Sparkles className="h-7 w-7 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">

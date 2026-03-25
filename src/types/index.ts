@@ -28,6 +28,8 @@ export interface StatsData {
   vector_docs: number;
 }
 
+
+
 export interface Post {
   id: number;
   subject: string;
@@ -44,6 +46,8 @@ export interface Post {
   last_commenter_name?: string;
   content?: string;
   engagement_score: number;
+  is_unreplied?: boolean;
+  permalink: string;
 }
 
 export interface PostsResponse {
@@ -86,8 +90,15 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   think?: string;
-  meta?: { intent: string; type: string; limit: string };
   steps: string[];
+  fetches?: string[];           // live fetch updates e.g. "help.zoho.com — 342 words"
+  meta?: {
+    intent: string;
+    type: string;
+    limit: string;
+  };
   timestamp: Date;
   isStreaming?: boolean;
+  confirmPending?: boolean;     // waiting for user to confirm off-topic research
+  confirmQuestion?: string;     // the original question to research if confirmed
 }

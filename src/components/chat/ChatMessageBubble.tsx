@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, ChevronDown, ChevronRight, Check, Brain, Globe } from 'lucide-react';
+import { Copy, ChevronDown, ChevronRight, Check, Brain, Globe, Search, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { ChatMessage } from '@/types';
 
@@ -12,11 +12,24 @@ function extractUrl(text: string): string | null {
   return m ? m[0] : null;
 }
 
-interface Props {
-  message: ChatMessage;
+function cleanResponseContent(content: string): string {
+  if (!content) return content;
+  let c = content;
+  // Remove ## Sources section and everything after it
+  c = c.replace(/\n?##\s*sources[\s\S]*/i, '');
+  // Remove stray "-> https://..." patterns
+  c = c.replace(/\s*->\s*https?:\/\/[^\s)>\]]+/gi, '');
+  // Remove orphaned "->" at end of lines
+  c = c.replace(/\s*->\s*$/gm, '');
+  return c.trim();
 }
 
-/* Shared markdown components for both think and content */
+interface Props {
+  message: ChatMessage;
+  onConfirmResearch?: (assistantId: string, question: string) => void;
+  onDeclineResearch?: (assistantId: string) => void;
+}
+
 const thinkMarkdownComponents = {
   p: ({ children }: any) => <p className="text-[12px] text-muted-foreground leading-[1.7] mb-2 last:mb-0">{children}</p>,
   strong: ({ children }: any) => <strong className="font-semibold text-foreground/80">{children}</strong>,
@@ -35,7 +48,7 @@ const thinkMarkdownComponents = {
   ),
 };
 
-export function ChatMessageBubble({ message }: Props) {
+export function ChatMessageBubble({ message, onConfirmResearch, onDeclineResearch }: Props) {
   const [thinkOpen, setThinkOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const isUser = message.role === 'user';
@@ -51,12 +64,11 @@ export function ChatMessageBubble({ message }: Props) {
     ? message.think.split(/\s+/).filter(Boolean).length
     : 0;
 
-  // User message
   if (isUser) {
     return (
       <div className="flex justify-end animate-slide-up">
         <div className="max-w-[75%] space-y-1.5">
-          <div className="rounded-2xl rounded-br-md bg-foreground text-background px-4 py-2.5">
+          <div className="rounded-2xl rounded-br-md bg-[#282A2C] text-[#fff] px-4 py-2.5">
             <p className="text-[14px] leading-relaxed">{message.content}</p>
           </div>
           {urlInMessage && (
@@ -70,11 +82,46 @@ export function ChatMessageBubble({ message }: Props) {
     );
   }
 
-  // Assistant message
   return (
     <div className="animate-slide-up">
       <div className="max-w-3xl mx-auto space-y-3">
-        {/* Intent badge */}
+
+        {/* Confirmation UI for off-topic deep research */}
+        {message.confirmPending && message.confirmQuestion && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertTriangle className="h-4 w-4 text-amber-400" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[13px] font-medium text-foreground">
+                  This question is outside Zoho Desk context
+                </p>
+                <p className="text-[12px] text-muted-foreground leading-relaxed">
+                  Your query <span className="text-foreground font-medium">"{message.confirmQuestion}"</span> doesn't appear to be about Zoho Desk.
+                  Would you like to proceed with a general deep research on this topic?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pl-11">
+              <button
+                onClick={() => onConfirmResearch?.(message.id, message.confirmQuestion!)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[12px] font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Search className="h-3 w-3" />
+                Yes, research this
+              </button>
+              <button
+                onClick={() => onDeclineResearch?.(message.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+              >
+                No, cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Meta badge */}
         {message.meta && !message.isStreaming && (
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-[10px] font-mono tracking-wide uppercase px-2 py-0.5 bg-primary/8 text-primary border-0">
@@ -83,28 +130,18 @@ export function ChatMessageBubble({ message }: Props) {
           </div>
         )}
 
-        {/* Thinking section — professional collapsible */}
+        {/* Thinking section */}
         {message.think && (
-          <div className={`rounded-xl overflow-hidden transition-all duration-300 ${
-            message.isStreaming
-              ? 'border border-primary/20'
-              : 'border border-border/60'
-          }`}>
-            {/* Shimmer bar when streaming */}
+          <div className="rounded-xl overflow-hidden border border-border/60 transition-all duration-300">
             {message.isStreaming && (
               <div className="h-[2px] think-shimmer" />
             )}
-
             <button
               onClick={() => setThinkOpen(!thinkOpen)}
               className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left hover:bg-muted/30 transition-colors"
             >
-              <Brain className={`h-3.5 w-3.5 shrink-0 ${
-                message.isStreaming ? 'text-primary animate-pulse' : 'text-muted-foreground'
-              }`} />
-              <span className="text-[12px] font-medium text-foreground/80">
-                Thinking
-              </span>
+              <Brain className={`h-3.5 w-3.5 shrink-0 ${message.isStreaming ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
+              <span className="text-[12px] font-medium text-foreground/80">Thinking</span>
               {message.isStreaming ? (
                 <span className="flex gap-0.5 ml-1">
                   <span className="w-1 h-1 rounded-full bg-primary animate-typing-dot" />
@@ -112,9 +149,7 @@ export function ChatMessageBubble({ message }: Props) {
                   <span className="w-1 h-1 rounded-full bg-primary animate-typing-dot" />
                 </span>
               ) : (
-                <span className="text-[11px] text-muted-foreground/50 ml-1">
-                  ({thinkWordCount} words)
-                </span>
+                <span className="text-[11px] text-muted-foreground/50 ml-1">({thinkWordCount} words)</span>
               )}
               <div className="ml-auto">
                 {thinkOpen
@@ -123,7 +158,6 @@ export function ChatMessageBubble({ message }: Props) {
                 }
               </div>
             </button>
-
             {thinkOpen && (
               <div className="px-4 py-3 border-t border-border/40 bg-muted/20 animate-fade-in">
                 <div className="think-markdown">
@@ -136,7 +170,7 @@ export function ChatMessageBubble({ message }: Props) {
           </div>
         )}
 
-        {/* Main markdown content */}
+        {/* Main content */}
         <div className="chat-markdown text-[14px] text-foreground leading-[1.75] tracking-[-0.005em]">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -148,15 +182,53 @@ export function ChatMessageBubble({ message }: Props) {
               ),
               thead: ({ children }) => <thead className="bg-muted/40">{children}</thead>,
               tbody: ({ children }) => <tbody className="divide-y divide-border/60">{children}</tbody>,
-              tr: ({ children }) => <tr className="hover:bg-muted/20 transition-colors">{children}</tr>,
+              tr: ({ children }) => {
+                // Walk React children to find the first href
+                const findHref = (node: any): string | null => {
+                  if (!node || typeof node !== 'object') return null;
+                  if (node.type === 'a' && node.props?.href) return node.props.href;
+                  const kids = node.props?.children;
+                  if (!kids) return null;
+                  for (const child of (Array.isArray(kids) ? kids : [kids])) {
+                    const found = findHref(child);
+                    if (found) return found;
+                  }
+                  return null;
+                };
+                const cells = Array.isArray(children) ? children.flat() : [children];
+                const href = cells.map(findHref).find(Boolean) ?? null;
+                return (
+                  <tr
+                    className={`divide-x divide-border/30 transition-colors ${href ? 'hover:bg-primary/5 cursor-pointer' : 'hover:bg-muted/20'}`}
+                    onClick={() => href && window.open(href, '_blank')}
+                  >
+                    {children}
+                  </tr>
+                );
+              },
               th: ({ children }) => (
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[11px] uppercase tracking-wider whitespace-nowrap">
+                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[11px] uppercase tracking-wider whitespace-nowrap border-b border-border">
                   {children}
                 </th>
               ),
-              td: ({ children }) => (
-                <td className="px-3 py-2.5 text-foreground align-top text-[13px]">{children}</td>
-              ),
+              td: ({ children }) => {
+                // Hide the Link column cell — row click handles navigation
+                const hasOnlyLink =
+                  children &&
+                  typeof children === 'object' &&
+                  !Array.isArray(children) &&
+                  (children as any).type === 'a';
+                if (hasOnlyLink) {
+                  return (
+                    <td className="px-3 py-2.5 align-top text-[13px]">
+                      <span className="text-primary text-[11px] underline underline-offset-2 opacity-60">↗</span>
+                    </td>
+                  );
+                }
+                return (
+                  <td className="px-3 py-2.5 text-foreground align-top text-[13px]">{children}</td>
+                );
+              },
               h1: ({ children }) => <h1 className="text-lg font-bold text-foreground mt-6 mb-3 first:mt-0 tracking-tight">{children}</h1>,
               h2: ({ children }) => <h2 className="text-base font-semibold text-foreground mt-5 mb-2 first:mt-0 tracking-tight">{children}</h2>,
               h3: ({ children }) => <h3 className="text-[14px] font-semibold text-foreground mt-4 mb-1.5 first:mt-0">{children}</h3>,
@@ -183,7 +255,7 @@ export function ChatMessageBubble({ message }: Props) {
               ),
             }}
           >
-            {message.content}
+            {cleanResponseContent(message.content)}
           </ReactMarkdown>
         </div>
 

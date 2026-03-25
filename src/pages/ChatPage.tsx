@@ -7,21 +7,24 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 export default function ChatPage() {
-  const { messages, isStreaming, currentSteps, sendMessage } = useChat();
+  const {
+    messages, isStreaming, currentSteps,
+    sendMessage, confirmResearch, declineResearch,
+  } = useChat();
   const [contextOpen, setContextOpen] = useState(true);
 
   return (
     <div className="h-[calc(100vh-3.5rem)] overflow-hidden">
       <ResizablePanelGroup direction="horizontal">
-        {/* Main conversation panel */}
         <ResizablePanel defaultSize={contextOpen ? 72 : 100} minSize={50}>
           <div className="relative h-full">
             <ChatConversation
               messages={messages}
               isStreaming={isStreaming}
               onSendMessage={sendMessage}
+              onConfirmResearch={confirmResearch}
+              onDeclineResearch={declineResearch}
             />
-            {/* Toggle context panel button */}
             {!contextOpen && (
               <Button
                 variant="ghost"
@@ -35,7 +38,6 @@ export default function ChatPage() {
           </div>
         </ResizablePanel>
 
-        {/* Context panel */}
         {contextOpen && (
           <>
             <ResizableHandle withHandle />
