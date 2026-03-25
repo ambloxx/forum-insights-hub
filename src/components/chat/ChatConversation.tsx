@@ -21,12 +21,12 @@ export function ChatConversation({ messages, isStreaming, onSendMessage }: Props
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Messages area */}
+      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin">
         {messages.length === 0 ? (
           <WelcomeScreen onQuerySelect={onSendMessage} />
         ) : (
-          <div className="max-w-3xl mx-auto py-6 px-4 space-y-6">
+          <div className="max-w-[680px] mx-auto py-6 px-4 space-y-6">
             {messages.map(msg => (
               <ChatMessageBubble key={msg.id} message={msg} />
             ))}
