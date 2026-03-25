@@ -12,12 +12,12 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
-        mono: ['"Geist Mono"', "monospace"],
+        sans: ['"Inter"', "system-ui", "-apple-system", "sans-serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
       },
       letterSpacing: {
         tighter: '-0.04em',
-        tight: '-0.025em',
+        tight: '-0.02em',
       },
       colors: {
         border: "hsl(var(--border))",
