@@ -84,21 +84,23 @@ export interface NotificationCheck {
   total_new: number;
   total_updated: number;
 }
+// Add this field to your existing ChatMessage interface:
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   think?: string;
-  steps: string[];
-  fetches?: string[];           // live fetch updates e.g. "help.zoho.com — 342 words"
+  steps?: string[];
+  fetches?: string[];
+  timestamp?: Date;
+  isStreaming?: boolean;
   meta?: {
     intent: string;
     type: string;
     limit: string;
   };
-  timestamp: Date;
-  isStreaming?: boolean;
-  confirmPending?: boolean;     // waiting for user to confirm off-topic research
-  confirmQuestion?: string;     // the original question to research if confirmed
+  confirmPending?: boolean;
+  confirmType?: 'research' | 'reasoning';  // ← NEW FIELD
+  confirmQuestion?: string;
 }

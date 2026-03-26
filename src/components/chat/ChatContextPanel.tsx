@@ -108,8 +108,9 @@ function parseIterations(steps: string[]): {
       continue;
     }
 
-    // Detect streaming final answer = post phase
-    if (s.includes('streaming final answer') || s.includes('using raw fallback')) {
+    // Detect streaming final/refined answer = post phase
+    if (s.includes('streaming final answer') || s.includes('streaming answer')
+        || s.includes('streaming refined answer') || s.includes('using raw fallback')) {
       phase = 'post';
       postSteps.push(step);
       currentIter = null;
@@ -224,7 +225,6 @@ function IterationBlock({ iter, isStreaming, isLast }: {
       iter.quality === 'insufficient' ? 'border-amber-500/20' :
       'border-border/50'
     }`}>
-      {/* Iteration header */}
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted/20 transition-colors"
@@ -255,7 +255,6 @@ function IterationBlock({ iter, isStreaming, isLast }: {
         )}
       </button>
 
-      {/* Iteration steps */}
       {open && iter.steps.length > 0 && (
         <div className="px-3 pb-3 pt-1 border-t border-border/40 bg-muted/10 space-y-1.5">
           {iter.steps.map((step, i) => (
@@ -359,6 +358,7 @@ export function ChatContextPanel({ messages, currentSteps, isStreaming }: Props)
   const isDeep  = intent === 'deep_research';
   const isUrl   = intent === 'url_read';
   const isConfirm = lastAssistant?.confirmPending;
+  const confirmType = lastAssistant?.confirmType;
 
   const { preSteps, iterations, postSteps } = parseIterations(steps);
 
@@ -395,14 +395,25 @@ export function ChatContextPanel({ messages, currentSteps, isStreaming }: Props)
 
       <div className="p-5 space-y-5">
 
-        {/* Confirmation pending */}
-        {isConfirm && (
+        {/* Confirmation pending — research (off-topic) */}
+        {isConfirm && confirmType !== 'reasoning' && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-2">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
               <span className="text-[13px] font-medium text-foreground">Awaiting confirmation</span>
             </div>
             <p className="text-[12px] text-muted-foreground pl-6">Outside Zoho Desk context — waiting for user response.</p>
+          </div>
+        )}
+
+        {/* Confirmation pending — reasoning loop retry */}
+        {isConfirm && confirmType === 'reasoning' && (
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-[13px] font-medium text-foreground">Refine search?</span>
+            </div>
+            <p className="text-[12px] text-muted-foreground pl-6">Initial results may be incomplete — waiting for user to confirm refined search.</p>
           </div>
         )}
 
@@ -437,13 +448,21 @@ export function ChatContextPanel({ messages, currentSteps, isStreaming }: Props)
                     attempt {totalAttempts} / 3
                   </span>
                 )}
+                {/* Show "awaiting confirmation" badge when reasoning confirm is pending */}
+                {isConfirm && confirmType === 'reasoning' && !isStreaming && (
+                  <span className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-mono border border-primary/20 animate-pulse">
+                    awaiting confirm
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Progress bar across attempts */}
             <div className="w-full bg-muted rounded-full h-1 overflow-hidden mb-3">
               <div className={`h-full rounded-full transition-all duration-500 ${
-                successAttempt ? 'bg-green-500' : 'bg-primary'
+                successAttempt ? 'bg-green-500' :
+                isConfirm && confirmType === 'reasoning' ? 'bg-primary/50' :
+                'bg-primary'
               }`}
                 style={{ width: successAttempt ? '100%' : `${(totalAttempts / 3) * 100}%` }}
               />

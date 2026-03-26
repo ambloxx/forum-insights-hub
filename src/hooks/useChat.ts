@@ -24,21 +24,13 @@ async function* readStream(response: Response) {
   }
 }
 
-/**
- * Transform the question based on selected mode before sending.
- * - deep_research: prefix with "research " so the detector fires reliably
- * - url_read:      wrap with "read and summarise this URL: ..." so url_handler fires
- * - default:       send as-is
- */
 function applyMode(question: string, mode: 'default' | 'deep_research' | 'url_read'): string {
   const q = question.trim();
   if (mode === 'deep_research') {
-    // Only prefix if not already a deep-research-style query
     const alreadyDeep = /^(research|deep|explain|analyse|analyze|why|how does)\b/i.test(q);
     return alreadyDeep ? q : `research ${q}`;
   }
   if (mode === 'url_read') {
-    // If the query is already a bare URL, wrap it
     const isUrl = /^https?:\/\//i.test(q);
     return isUrl ? `read and summarise this URL: ${q}` : q;
   }
@@ -104,8 +96,31 @@ export function useChat() {
                 ...m,
                 isStreaming: false,
                 confirmPending: true,
+                confirmType: 'research' as const,
                 confirmQuestion: originalQuestion,
                 meta: { intent: 'deep_research', type: 'all', limit: '20' },
+              }
+            : m
+        ));
+        setIsStreaming(false);
+        return;
+
+      } else if (data.startsWith('[CONFIRM_REASONING]')) {
+        const originalQuestion = data.slice(19);
+        setMessages(prev => prev.map(m =>
+          m.id === assistantId
+            ? {
+                ...m,
+                isStreaming: false,
+                confirmPending: true,
+                confirmType: 'reasoning' as const,
+                confirmQuestion: originalQuestion,
+                // Keep existing content/steps/meta — user sees the partial answer
+                content,
+                think,
+                meta,
+                steps: [...steps],
+                fetches: [...fetches],
               }
             : m
         ));
@@ -141,7 +156,6 @@ export function useChat() {
 
     const userMsg: ChatMessage = {
       id: genId(), role: 'user',
-      // Show original question in bubble, but send transformed version to API
       content: question,
       steps: [], fetches: [], timestamp: new Date(),
     };
@@ -167,13 +181,15 @@ export function useChat() {
     }
   }, [_runStream]);
 
+  // ── Deep research confirmation ───────────────────────────────────────────
+
   const confirmResearch = useCallback(async (
     assistantId: string,
     question: string,
   ) => {
     setMessages(prev => prev.map(m =>
       m.id === assistantId
-        ? { ...m, confirmPending: false, content: '', isStreaming: true, steps: [], fetches: [] }
+        ? { ...m, confirmPending: false, confirmType: undefined, content: '', isStreaming: true, steps: [], fetches: [] }
         : m
     ));
     try {
@@ -196,6 +212,7 @@ export function useChat() {
         ? {
             ...m,
             confirmPending: false,
+            confirmType: undefined,
             content: "Research cancelled. Feel free to ask me anything about the **Zoho Desk** forum instead.",
             isStreaming: false,
           }
@@ -203,8 +220,49 @@ export function useChat() {
     ));
   }, []);
 
+  // ── Reasoning loop confirmation ──────────────────────────────────────────
+
+  const confirmReasoning = useCallback(async (
+    assistantId: string,
+    question: string,
+  ) => {
+    // Keep existing content but reset streaming state for the retry
+    setMessages(prev => prev.map(m =>
+      m.id === assistantId
+        ? { ...m, confirmPending: false, confirmType: undefined, isStreaming: true }
+        : m
+    ));
+    try {
+      await _runStream('/ask/stream/reasoning-confirmed', question, assistantId);
+    } catch (err: any) {
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId
+          ? { ...m, content: m.content + `\n\n**Error:** ${err.message}`, isStreaming: false }
+          : m
+      ));
+    } finally {
+      setIsStreaming(false);
+      setCurrentSteps([]);
+    }
+  }, [_runStream]);
+
+  const declineReasoning = useCallback((assistantId: string) => {
+    setMessages(prev => prev.map(m =>
+      m.id === assistantId
+        ? {
+            ...m,
+            confirmPending: false,
+            confirmType: undefined,
+            // Keep whatever partial answer was already streamed
+          }
+        : m
+    ));
+  }, []);
+
   return {
     messages, isStreaming, currentSteps,
-    sendMessage, confirmResearch, declineResearch,
+    sendMessage,
+    confirmResearch, declineResearch,
+    confirmReasoning, declineReasoning,
   };
 }

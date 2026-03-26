@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 export default function ChatPage() {
   const {
     messages, isStreaming, currentSteps,
-    sendMessage, confirmResearch, declineResearch,
+    sendMessage,
+    confirmResearch, declineResearch,
+    confirmReasoning, declineReasoning,
   } = useChat();
   const [contextOpen, setContextOpen] = useState(true);
 
@@ -24,6 +26,8 @@ export default function ChatPage() {
               onSendMessage={sendMessage}
               onConfirmResearch={confirmResearch}
               onDeclineResearch={declineResearch}
+              onConfirmReasoning={confirmReasoning}
+              onDeclineReasoning={declineReasoning}
             />
             {!contextOpen && (
               <Button

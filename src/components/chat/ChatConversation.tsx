@@ -10,6 +10,8 @@ interface Props {
   onSendMessage: (msg: string, mode?: 'default' | 'deep_research' | 'url_read') => void;
   onConfirmResearch: (assistantId: string, question: string) => void;
   onDeclineResearch: (assistantId: string) => void;
+  onConfirmReasoning: (assistantId: string, question: string) => void;
+  onDeclineReasoning: (assistantId: string) => void;
 }
 
 export function ChatConversation({
@@ -18,6 +20,8 @@ export function ChatConversation({
   onSendMessage,
   onConfirmResearch,
   onDeclineResearch,
+  onConfirmReasoning,
+  onDeclineReasoning,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +44,8 @@ export function ChatConversation({
                 message={msg}
                 onConfirmResearch={onConfirmResearch}
                 onDeclineResearch={onDeclineResearch}
+                onConfirmReasoning={onConfirmReasoning}
+                onDeclineReasoning={onDeclineReasoning}
               />
             ))}
           </div>
