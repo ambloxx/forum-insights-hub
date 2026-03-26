@@ -2,7 +2,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Header } from '@/components/Header';
 import { useTheme } from '@/hooks/useTheme';
-import { useNotifications } from '@/hooks/useNotifications';
 import { useHealth } from '@/hooks/useHealth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
@@ -13,7 +12,6 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { theme, toggleTheme } = useTheme();
-  useNotifications();
   const { data: health, isError } = useHealth();
   const showVectorWarning = !isError && health && health.total_posts_vec === 0;
 

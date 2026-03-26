@@ -8,6 +8,7 @@ interface Props {
   messages: ChatMessage[];
   isStreaming: boolean;
   onSendMessage: (msg: string, mode?: 'default' | 'deep_research' | 'url_read') => void;
+  onStopStreaming?: () => void;
   onConfirmResearch: (assistantId: string, question: string) => void;
   onDeclineResearch: (assistantId: string) => void;
   onConfirmReasoning: (assistantId: string, question: string) => void;
@@ -15,13 +16,9 @@ interface Props {
 }
 
 export function ChatConversation({
-  messages,
-  isStreaming,
-  onSendMessage,
-  onConfirmResearch,
-  onDeclineResearch,
-  onConfirmReasoning,
-  onDeclineReasoning,
+  messages, isStreaming, onSendMessage, onStopStreaming,
+  onConfirmResearch, onDeclineResearch,
+  onConfirmReasoning, onDeclineReasoning,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +48,7 @@ export function ChatConversation({
           </div>
         )}
       </div>
-      <ChatInput onSend={onSendMessage} isStreaming={isStreaming} />
+      <ChatInput onSend={onSendMessage} isStreaming={isStreaming} onStop={onStopStreaming} />
     </div>
   );
 }

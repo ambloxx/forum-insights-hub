@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, ChevronDown, ChevronRight, Check, Brain, Globe, Search, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Copy, ChevronDown, ChevronRight, Check, Brain, Globe, Search, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { ChatMessage } from '@/types';
 
@@ -71,11 +71,11 @@ export function ChatMessageBubble({
     return (
       <div className="flex justify-end animate-slide-up">
         <div className="max-w-[75%] space-y-1.5">
-          <div className="rounded-2xl rounded-br-md bg-[#282A2C] text-[#fff] px-4 py-2.5">
+          <div className="rounded-2xl rounded-br-md bg-primary text-primary-foreground px-4 py-2.5">
             <p className="text-[14px] leading-relaxed">{message.content}</p>
           </div>
           {urlInMessage && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/50 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-[11px] text-muted-foreground">
               <Globe className="h-3 w-3 shrink-0 text-info" />
               <span className="truncate">{urlInMessage}</span>
             </div>
@@ -87,43 +87,39 @@ export function ChatMessageBubble({
 
   const isResearchConfirm  = message.confirmPending && message.confirmType === 'research';
   const isReasoningConfirm = message.confirmPending && message.confirmType === 'reasoning';
-  // Legacy fallback: if confirmPending but no confirmType, treat as research
   const isLegacyConfirm    = message.confirmPending && !message.confirmType;
 
   return (
     <div className="animate-slide-up">
       <div className="max-w-3xl mx-auto space-y-3">
 
-        {/* Confirmation UI for off-topic deep research */}
+        {/* Research confirmation */}
         {(isResearchConfirm || isLegacyConfirm) && message.confirmQuestion && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+          <div className="rounded-xl border border-warning/20 bg-warning/5 p-4 space-y-3 animate-fade-in">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
+              <div className="w-9 h-9 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-4 w-4 text-warning" />
               </div>
-              <div className="space-y-1">
-                <p className="text-[13px] font-medium text-foreground">
-                  This question is outside Zoho Desk context
-                </p>
+              <div className="space-y-1 flex-1">
+                <p className="text-[13px] font-semibold text-foreground">Outside forum context</p>
                 <p className="text-[12px] text-muted-foreground leading-relaxed">
-                  Your query <span className="text-foreground font-medium">"{message.confirmQuestion}"</span> doesn't appear to be about Zoho Desk.
-                  Would you like to proceed with a general deep research on this topic?
+                  <span className="text-foreground font-medium">"{message.confirmQuestion}"</span> doesn't appear related to Zoho Desk. Proceed with general deep research?
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 pl-11">
+            <div className="flex items-center gap-2 pl-12">
               <button
                 onClick={() => onConfirmResearch?.(message.id, message.confirmQuestion!)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[12px] font-medium hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-[12px] font-medium hover:bg-primary/90 transition-colors"
               >
                 <Search className="h-3 w-3" />
                 Yes, research this
               </button>
               <button
                 onClick={() => onDeclineResearch?.(message.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
               >
-                No, cancel
+                Cancel
               </button>
             </div>
           </div>
@@ -140,34 +136,36 @@ export function ChatMessageBubble({
 
         {/* Thinking section */}
         {message.think && (
-          <div className="rounded-xl overflow-hidden border border-border/60 transition-all duration-300">
-            {message.isStreaming && (
-              <div className="h-[2px] think-shimmer" />
-            )}
+          <div className="rounded-xl overflow-hidden border border-border/50 transition-all duration-300">
+            {message.isStreaming && <div className="h-[2px] think-shimmer" />}
             <button
               onClick={() => setThinkOpen(!thinkOpen)}
-              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left hover:bg-muted/30 transition-colors"
+              className="flex items-center gap-2.5 w-full px-4 py-3 text-left hover:bg-muted/20 transition-colors"
             >
-              <Brain className={`h-3.5 w-3.5 shrink-0 ${message.isStreaming ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
-              <span className="text-[12px] font-medium text-foreground/80">Thinking</span>
+              <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                message.isStreaming ? 'bg-primary/10' : 'bg-muted/50'
+              }`}>
+                <Brain className={`h-3.5 w-3.5 ${message.isStreaming ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
+              </div>
+              <span className="text-[13px] font-medium text-foreground/80">Thinking</span>
               {message.isStreaming ? (
-                <span className="flex gap-0.5 ml-1">
+                <span className="flex gap-1 ml-1">
                   <span className="w-1 h-1 rounded-full bg-primary animate-typing-dot" />
                   <span className="w-1 h-1 rounded-full bg-primary animate-typing-dot" />
                   <span className="w-1 h-1 rounded-full bg-primary animate-typing-dot" />
                 </span>
               ) : (
-                <span className="text-[11px] text-muted-foreground/50 ml-1">({thinkWordCount} words)</span>
+                <span className="text-[11px] text-muted-foreground/40 ml-1">{thinkWordCount} words</span>
               )}
               <div className="ml-auto">
                 {thinkOpen
-                  ? <ChevronDown className="h-3 w-3 text-muted-foreground/50" />
-                  : <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                  ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                  : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
                 }
               </div>
             </button>
             {thinkOpen && (
-              <div className="px-4 py-3 border-t border-border/40 bg-muted/20 animate-fade-in">
+              <div className="px-4 py-3 border-t border-border/30 bg-muted/10 animate-fade-in">
                 <div className="think-markdown">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} components={thinkMarkdownComponents}>
                     {message.think}
@@ -215,26 +213,14 @@ export function ChatMessageBubble({
                   );
                 },
                 th: ({ children }) => (
-                  <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[11px] uppercase tracking-wider whitespace-nowrap border-b border-border">
-                    {children}
-                  </th>
+                  <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground text-[11px] uppercase tracking-wider whitespace-nowrap border-b border-border">{children}</th>
                 ),
                 td: ({ children }) => {
-                  const hasOnlyLink =
-                    children &&
-                    typeof children === 'object' &&
-                    !Array.isArray(children) &&
-                    (children as any).type === 'a';
+                  const hasOnlyLink = children && typeof children === 'object' && !Array.isArray(children) && (children as any).type === 'a';
                   if (hasOnlyLink) {
-                    return (
-                      <td className="px-3 py-2.5 align-top text-[13px]">
-                        <span className="text-primary text-[11px] underline underline-offset-2 opacity-60">↗</span>
-                      </td>
-                    );
+                    return <td className="px-3 py-2.5 align-top text-[13px]"><span className="text-primary text-[11px] underline underline-offset-2 opacity-60">↗</span></td>;
                   }
-                  return (
-                    <td className="px-3 py-2.5 text-foreground align-top text-[13px]">{children}</td>
-                  );
+                  return <td className="px-3 py-2.5 text-foreground align-top text-[13px]">{children}</td>;
                 },
                 h1: ({ children }) => <h1 className="text-lg font-bold text-foreground mt-6 mb-3 first:mt-0 tracking-tight">{children}</h1>,
                 h2: ({ children }) => <h2 className="text-base font-semibold text-foreground mt-5 mb-2 first:mt-0 tracking-tight">{children}</h2>,
@@ -256,9 +242,7 @@ export function ChatMessageBubble({
                 ),
                 hr: () => <hr className="border-border my-4" />,
                 a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 decoration-primary/30 hover:decoration-primary transition-colors">
-                    {children}
-                  </a>
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 decoration-primary/30 hover:decoration-primary transition-colors">{children}</a>
                 ),
               }}
             >
@@ -281,7 +265,7 @@ export function ChatMessageBubble({
           <div className="flex items-center gap-1 pt-0.5">
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 h-7 text-[12px] text-muted-foreground hover:text-foreground px-2 rounded-lg hover:bg-muted/50 transition-colors"
+              className="inline-flex items-center gap-1.5 h-7 text-[12px] text-muted-foreground hover:text-foreground px-2 rounded-lg hover:bg-muted/30 transition-colors"
             >
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               {copied ? 'Copied' : 'Copy'}
@@ -289,34 +273,31 @@ export function ChatMessageBubble({
           </div>
         )}
 
-        {/* Confirmation UI for reasoning loop retry — shown AFTER the response */}
+        {/* Reasoning confirmation */}
         {isReasoningConfirm && message.confirmQuestion && (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3 animate-fade-in">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <RefreshCw className="h-4 w-4 text-primary" />
               </div>
-              <div className="space-y-1">
-                <p className="text-[13px] font-medium text-foreground">
-                  Results may be incomplete
-                </p>
+              <div className="space-y-1 flex-1">
+                <p className="text-[13px] font-semibold text-foreground">Results may be incomplete</p>
                 <p className="text-[12px] text-muted-foreground leading-relaxed">
-                  The initial search for <span className="text-foreground font-medium">"{message.confirmQuestion}"</span> returned limited results.
-                  Would you like me to refine the query and search again with broader terms?
+                  Initial search for <span className="text-foreground font-medium">"{message.confirmQuestion}"</span> returned limited results. Refine and search again?
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 pl-11">
+            <div className="flex items-center gap-2 pl-12">
               <button
                 onClick={() => onConfirmReasoning?.(message.id, message.confirmQuestion!)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[12px] font-medium hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-[12px] font-medium hover:bg-primary/90 transition-colors"
               >
                 <RefreshCw className="h-3 w-3" />
-                Yes, refine search
+                Refine search
               </button>
               <button
                 onClick={() => onDeclineReasoning?.(message.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
               >
                 Keep current results
               </button>
